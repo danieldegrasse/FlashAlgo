@@ -17,7 +17,7 @@
 
 #include "FlashOS.h"
 
-#if defined(NUCLEO_STM32L496ZG) && (defined(SPI1) || defined(SPI2) || defined(SPI3)) && defined(W25Q16)
+#if defined(MT25QU512ABB)
 
 #define DEVICE_NAME "STM32L496ZG 16Mbit Serial Flash"
 struct FlashDevice const FlashDevice = {

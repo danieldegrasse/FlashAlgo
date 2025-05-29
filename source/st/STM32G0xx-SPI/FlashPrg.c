@@ -18,39 +18,53 @@
 
 #include "FlashOS.h"
 
-#include "flashalgo_stm32l496.h"
+#include "hal/stm32g0xx_ll_spi.h"
+#include "hal/stm32g0xx_ll_gpio.h"
+#include "hal/stm32g0xx_ll_bus.h"
+
 
 uint32_t Init(uint32_t adr, uint32_t clk, uint32_t fnc)
 {
-    return flashalgo_stm32l496_init(adr, clk, fnc);
+    LL_SPI_InitTypeDef SPI_InitStruct = {0};
+    LL_GPIO_InitTypeDef GPIO_InitStruct = {0};
+
+
+    /* Init clocks for SPI1 and GPIO ports */
+    LL_APB2_GRP1_EnableClock(LL_APB2_GRP1_PERIPH_SPI1);
+    LL_IOP_GRP1_EnableClock(LL_IOP_GRP1_PERIPH_GPIOA);
+    LL_IOP_GRP1_EnableClock(LL_IOP_GRP1_PERIPH_GPIOB);
+    LL_IOP_GRP1_EnableClock(LL_IOP_GRP1_PERIPH_GPIOC);
+
+
+    return 1;
 }
 
 uint32_t UnInit(uint32_t fnc)
 {
-    return flashalgo_stm32l496_uninit(fnc);
+    return 1;
 }
 
 uint32_t BlankCheck(uint32_t adr, uint32_t sz, uint8_t pat)
 {
-    return flashalgo_stm32l496_blank_check(adr, sz, pat);
+    return 1;
 }
 
 uint32_t EraseChip(void)
 {
-    return flashalgo_stm32l496_erase_chip();
+    return 1;
 }
 
 uint32_t EraseSector(uint32_t adr)
 {
-    return flashalgo_stm32l496_erase_sector(adr);
+    return 1;
 }
 
 uint32_t ProgramPage(uint32_t adr, uint32_t sz, uint32_t *buf)
 {
-    return flashalgo_stm32l496_program_page(adr, sz, buf);
+    return 1;
 }
 
 uint32_t Verify(uint32_t adr, uint32_t sz, uint32_t *buf)
 {
-    return flashalgo_stm32l496_verify(adr, sz, buf);
+    return 1;
 }

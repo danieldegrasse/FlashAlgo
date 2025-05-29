@@ -164,9 +164,9 @@ projects:
     stm32l475:
         - *module_tools
         - records/projects/st/STM32L475.yaml
-    stm32l496:
+    stm32g0xx_spi:
         - *module_tools
-        - records/projects/st/STM32L496.yaml
+        - records/projects/st/STM32G0xx_SPI.yaml
     stm32wb55rg:
         - *module_tools
         - records/projects/st/STM32WB55RG.yaml
