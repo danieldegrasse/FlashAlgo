@@ -18,52 +18,96 @@
 
 #include "FlashOS.h"
 
-#include "hal/stm32g0xx_ll_spi.h"
-#include "hal/stm32g0xx_ll_gpio.h"
-#include "hal/stm32g0xx_ll_bus.h"
+#include "spi_hal.h"
+#include "eeprom_hal.h"
 
+/* Set in FlashDev.c */
+extern struct spi_hal_fns *spi_hal;
+extern struct eeprom_hal_fns *eeprom_hal;
 
+/*
+ *  Initialize Flash Programming Functions
+ *    Parameter:      adr:  Device Base Address
+ *                    clk:  Clock Frequency (Hz)
+ *                    fnc:  Function Code (1 - Erase, 2 - Program, 3 - Verify)
+ *    Return Value:   0 - OK,  1 - Failed
+ */
 uint32_t Init(uint32_t adr, uint32_t clk, uint32_t fnc)
 {
-    LL_SPI_InitTypeDef SPI_InitStruct = {0};
-    LL_GPIO_InitTypeDef GPIO_InitStruct = {0};
+    int ret;
 
-
-    /* Init clocks for SPI1 and GPIO ports */
-    LL_APB2_GRP1_EnableClock(LL_APB2_GRP1_PERIPH_SPI1);
-    LL_IOP_GRP1_EnableClock(LL_IOP_GRP1_PERIPH_GPIOA);
-    LL_IOP_GRP1_EnableClock(LL_IOP_GRP1_PERIPH_GPIOB);
-    LL_IOP_GRP1_EnableClock(LL_IOP_GRP1_PERIPH_GPIOC);
-
-
-    return 1;
+    ret = spi_hal->init();
+    if (ret != 0) {
+        return 1; /* Initialization failed */
+    }
+    ret = eeprom_hal->init();
+    if (ret != 0) {
+        spi_hal->deinit(); /* Cleanup SPI if EEPROM init fails */
+        return 1;
+    }
+    return 0;
 }
 
+/*
+ *  De-Initialize Flash Programming Functions
+ *    Parameter:      fnc:  Function Code (1 - Erase, 2 - Program, 3 - Verify)
+ *    Return Value:   0 - OK,  1 - Failed
+ */
 uint32_t UnInit(uint32_t fnc)
 {
     return 1;
 }
 
+/*
+ *  Blank Check Checks if Memory is Blank
+ *    Parameter:      adr:  Block Start Address
+ *                    sz:   Block Size (in bytes)
+ *                    pat:  Block Pattern
+ *    Return Value:   0 - OK,  1 - Failed
+ */
 uint32_t BlankCheck(uint32_t adr, uint32_t sz, uint8_t pat)
 {
     return 1;
 }
 
+/*
+ *  Erase complete Flash Memory
+ *    Return Value:   0 - OK,  1 - Failed
+ */
 uint32_t EraseChip(void)
 {
     return 1;
 }
 
+/*
+ *  Erase Sector in Flash Memory
+ *    Parameter:      adr:  Sector Address
+ *    Return Value:   0 - OK,  1 - Failed
+ */
 uint32_t EraseSector(uint32_t adr)
 {
     return 1;
 }
 
+/*
+ *  Program Page in Flash Memory
+ *    Parameter:      adr:  Page Start Address
+ *                    sz:   Page Size
+ *                    buf:  Page Data
+ *    Return Value:   0 - OK,  1 - Failed
+ */
 uint32_t ProgramPage(uint32_t adr, uint32_t sz, uint32_t *buf)
 {
     return 1;
 }
 
+/*
+ *  Verify Page in Flash Memory
+ *    Parameter:      adr:  Page Start Address
+ *                    sz:   Page Size
+ *                    buf:  Page Data
+ *    Return Value:   0 - OK,  1 - Failed
+ */
 uint32_t Verify(uint32_t adr, uint32_t sz, uint32_t *buf)
 {
     return 1;

@@ -35,6 +35,14 @@ struct FlashDevice const FlashDevice = {
      {SECTOR_END}},
 };
 
+/* Implemented in stm32_spi_hal.c */
+extern struct spi_hal_fns stm32_spi_hal_fns;
+const struct spi_hal_fns *spi_hal = &stm32_spi_hal_fns;
+
+/* Implemented in mt25qu512abb.c */
+extern struct eeprom_hal_fns mt25qu512abb_hal_fns;
+const struct eeprom_hal_fns *eeprom_hal = &mt25qu512abb_hal_fns;
+
 #else
 
 #error "Missing FlashDevice definition for this target"
