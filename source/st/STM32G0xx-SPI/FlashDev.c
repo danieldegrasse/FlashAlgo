@@ -17,9 +17,7 @@
 
 #include "FlashOS.h"
 
-#if defined(MT25QU512ABB)
-
-#define DEVICE_NAME "External MT25QU512ABB SPI EEPROM"
+#define DEVICE_NAME "External SPI EEPROM"
 struct FlashDevice const FlashDevice = {
     FLASH_DRV_VERS,            // Driver Version, do not modify!
     DEVICE_NAME,               // Device Name (128 chars max)
@@ -34,8 +32,3 @@ struct FlashDevice const FlashDevice = {
     {{0x00001000, 0x00000000}, // Sector Size {4kB, starting at address 0}
      {SECTOR_END}},
 };
-#else
-
-#error "Missing FlashDevice definition for this target"
-
-#endif

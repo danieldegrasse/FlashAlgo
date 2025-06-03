@@ -26,9 +26,8 @@ echo "timeout will take a while..."
 pyocd commander -vvv -u $1 --pack projectfiles/stm32_dfp_patched.pack \
 	--target STM32G0B1CEUx -c load \
 	projectfiles/make_gcc_arm/stm32g0xx_spi/build/stm32g0xx_spi.bin  0x80000000 > $file 2>&1
-echo $file
 addr=$(awk '{
-    while (match($0, /code=0x([0-9]|[a-d])*/)) {
+    while (match($0, /code=0x[0-9a-f]*/)) {
         n++;
         if (n==2) {
             hex = substr($0, RSTART + 5, RLENGTH - 5);  # extract just the "0xNNN" part

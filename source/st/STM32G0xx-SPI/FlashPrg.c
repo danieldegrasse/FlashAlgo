@@ -19,7 +19,7 @@
 #include "FlashOS.h"
 
 #include "spi_hal.h"
-#include "eeprom_hal.h"
+#include "eeprom.h"
 
 /*
  *  Initialize Flash Programming Functions
@@ -37,10 +37,6 @@ uint32_t Init(uint32_t adr, uint32_t clk, uint32_t fnc)
         return 1; /* Initialization failed */
     }
 
-    volatile int i = 0;
-    while (i == 0) {
-        /* Wait for debugger */
-    }
     ret = eeprom_init();
     if (ret != 0) {
         spi_deinit(); /* Cleanup SPI if EEPROM init fails */

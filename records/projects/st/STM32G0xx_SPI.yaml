@@ -4,7 +4,6 @@ common:
     macros:
         - STM32G0xx
         - STM32G0B1xx
-        - MT25QU512ABB
         - FLASH_DRV_VERS=0
         - USE_FULL_LL_DRIVER
     includes:
