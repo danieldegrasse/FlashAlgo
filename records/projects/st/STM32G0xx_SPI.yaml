@@ -1,6 +1,6 @@
 common:
     target:
-        - cortex-m4
+        - cortex-m0
     macros:
         - STM32G0xx
         - STM32G0B1xx

@@ -7,43 +7,57 @@
  * MT25QU512ABB SPI eeprom.
  */
 
-#include "eeprom_hal.h"
+#include <stddef.h>
+#include "spi_hal.h"
 
-static int mt25qu512abb_init(void)
+int mt25qu512abb_init(void)
 {
-    return 0; /* No init required */
+    struct spi_buf buf[2];
+    uint8_t jedec_buf[3];
+    int ret;
+    uint8_t cmd = 0x9F; /* Read JEDEC ID command */
+    buf[0].tx_buf = &cmd;
+    buf[0].rx_buf = NULL;
+    buf[0].len = 1;
+    buf[1].tx_buf = NULL;
+    buf[1].rx_buf = jedec_buf;
+    buf[1].len = sizeof(jedec_buf);
+
+
+    /* Read JEDEC ID, verify it matches what we expect */
+    ret = spi_transfer(buf, 2);
+    if (ret != 0) {
+        return ret;
+    }
+
+    if (jedec_buf[0] != 0x20 || jedec_buf[1] != 0xBB || jedec_buf[2] != 0x20) {
+        return -1; /* Invalid JEDEC ID */
+    }
+
+    return 0; /* Correct flash chip discovered */
 }
 
-static int mt25qu512abb_deinit(void)
+int mt25qu512abb_deinit(void)
 {
     return 0; /* No deinit required */
 }
 
-static int mt25qu512abb_erase_chip(void)
+int mt25qu512abb_erase_chip(void)
 {
     return -1; /* Chip erase not implemented */
 }
 
-static int mt25qu512abb_erase_sector(uint32_t sector)
+int mt25qu512abb_erase_sector(uint32_t sector)
 {
     return -1; /* Sector erase not implemented */
 }
 
-static int mt25qu512abb_program(uint32_t addr, const uint8_t *data, uint32_t len)
+int mt25qu512abb_program(uint32_t addr, const uint8_t *data, uint32_t len)
 {
     return -1; /* Programming not implemented */
 }
 
-static int mt25qu512abb_read(uint32_t addr, uint8_t *data, uint32_t len)
+int mt25qu512abb_read(uint32_t addr, uint8_t *data, uint32_t len)
 {
     return -1; /* Reading not implemented */
 }
-
-struct eeprom_hal_fns mt25qu512abb_hal_fns = {
-    .init = mt25qu512abb_init,
-    .deinit = mt25qu512abb_deinit,
-    .erase_chip = mt25qu512abb_erase_chip,
-    .erase_sector = mt25qu512abb_erase_sector,
-    .program = mt25qu512abb_program,
-    .read = mt25qu512abb_read,
-};

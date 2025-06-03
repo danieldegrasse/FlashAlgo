@@ -7,19 +7,25 @@
 #define EEPROM_HAL_H
 
 #include <stdint.h>
+#include "spi_hal.h"
 
 /*
  * This file contains the HAL interface for SPI EEPROMs.
  * It includes initialization, deinit and data transfer functions.
  */
 
-struct eeprom_hal_fns {
-    int (*init)(void);
-    int (*deinit)(void);
-    int (*erase_chip)(void);
-    int (*erase_sector)(uint32_t sector);
-    int (*program)(uint32_t addr, const uint8_t *data, uint32_t len);
-    int (*read)(uint32_t addr, uint8_t *data, uint32_t len);
-};
+#ifdef MT25QU512ABB
+
+#include "mt25qu512abb.h"
+#define eeprom_init mt25qu512abb_init
+#define eeprom_deinit mt25qu512abb_deinit
+#define eeprom_erase_chip mt25qu512abb_erase_chip
+#define eeprom_erase_sector mt25qu512abb_erase_sector
+#define eeprom_program mt25qu512abb_program
+
+#else
+#error "No EEPROM HAL implementation defined. Please define MT25QU512ABB or implement your own."
+
+#endif
 
 #endif /* EEPROM_HAL_H */

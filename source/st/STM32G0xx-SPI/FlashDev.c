@@ -19,13 +19,13 @@
 
 #if defined(MT25QU512ABB)
 
-#define DEVICE_NAME "STM32L496ZG 16Mbit Serial Flash"
+#define DEVICE_NAME "External MT25QU512ABB SPI EEPROM"
 struct FlashDevice const FlashDevice = {
     FLASH_DRV_VERS,            // Driver Version, do not modify!
     DEVICE_NAME,               // Device Name (128 chars max)
     EXTSPI,                    // Device Type
-    0x00000000,                // Device Start Address
-    0x00200000,                // Device Size
+    0x80000000,                // Device Start Address
+    0x20000000,                // Device Size
     0x00001000,                // Programming Page Size
     0x00000000,                // Reserved, must be 0
     0xFF,                      // Initial Content of Erased Memory
@@ -34,15 +34,6 @@ struct FlashDevice const FlashDevice = {
     {{0x00001000, 0x00000000}, // Sector Size {4kB, starting at address 0}
      {SECTOR_END}},
 };
-
-/* Implemented in stm32_spi_hal.c */
-extern struct spi_hal_fns stm32_spi_hal_fns;
-const struct spi_hal_fns *spi_hal = &stm32_spi_hal_fns;
-
-/* Implemented in mt25qu512abb.c */
-extern struct eeprom_hal_fns mt25qu512abb_hal_fns;
-const struct eeprom_hal_fns *eeprom_hal = &mt25qu512abb_hal_fns;
-
 #else
 
 #error "Missing FlashDevice definition for this target"

@@ -50,3 +50,4 @@ bff8dca4220bdd43607cef13ccc3f6c348e1c306 *./CMSIS/SVD/STM32G0B0.svd
 b4eb242fad1bfdec07162c0fc0c1b9e927d97ae2 *./Templates/CubeMX/CubeMX.csolution.yml
 0c08cd1acf64d97828e2a5389ca4be389e3f80c1 *./Templates/CubeMX/CubeMX.cproject.yml
 f04e0475510e847e6716b43888bf32ad492a60e5 *./Keil.STM32G0xx_DFP.pdsc
+1f26b55040eea177997af77143d6ac58f79b6504 *./CMSIS/Flash/STM32G0Bx_SPI_EEPROM.FLM

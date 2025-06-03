@@ -21,10 +21,6 @@
 #include "spi_hal.h"
 #include "eeprom_hal.h"
 
-/* Set in FlashDev.c */
-extern struct spi_hal_fns *spi_hal;
-extern struct eeprom_hal_fns *eeprom_hal;
-
 /*
  *  Initialize Flash Programming Functions
  *    Parameter:      adr:  Device Base Address
@@ -36,13 +32,18 @@ uint32_t Init(uint32_t adr, uint32_t clk, uint32_t fnc)
 {
     int ret;
 
-    ret = spi_hal->init();
+    ret = spi_init();
     if (ret != 0) {
         return 1; /* Initialization failed */
     }
-    ret = eeprom_hal->init();
+
+    volatile int i = 0;
+    while (i == 0) {
+        /* Wait for debugger */
+    }
+    ret = eeprom_init();
     if (ret != 0) {
-        spi_hal->deinit(); /* Cleanup SPI if EEPROM init fails */
+        spi_deinit(); /* Cleanup SPI if EEPROM init fails */
         return 1;
     }
     return 0;

@@ -3974,4 +3974,3 @@ uint32_t    LL_RCC_GetUSBClockFreq(uint32_t USBxSource);
 #endif
 
 #endif /* STM32G0xx_LL_RCC_H */
-
