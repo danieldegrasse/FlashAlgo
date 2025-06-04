@@ -133,11 +133,6 @@ int eeprom_erase_chip(void)
     struct spi_buf buf;
     int ret;
 
-    volatile int i = 0;
-    while (i == 0) {
-        /* Wait for debugger */
-    }
-
     if (eeprom_probe(&cfg) != 0) {
         return -1; /* EEPROM probe failed */
     }
