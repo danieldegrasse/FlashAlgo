@@ -15,6 +15,7 @@ tool_specific:
                 - c
                 - nosys
             common_flags:
+                - -Os
                 - -Wall
                 - -ffunction-sections
                 - -fdata-sections
@@ -23,7 +24,8 @@ tool_specific:
                 - -mpic-register=9
                 - -fno-jump-tables
                 - -ffreestanding
-                - -g
             ld_flags:
                 - -nostartfiles
                 - -Wl,--print-memory-usage
+
+
