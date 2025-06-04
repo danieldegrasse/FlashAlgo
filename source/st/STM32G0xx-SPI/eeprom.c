@@ -195,11 +195,6 @@ int eeprom_program(uint32_t addr, const uint8_t *data, uint32_t len)
     uint8_t cmd_buf[5];
     int ret;
 
-    volatile int i = 0;
-    while (i == 0) {
-        /* Wait for debugger */
-    }
-
     if (len == 0 || data == NULL) {
         return -1; /* Invalid parameters */
     }
@@ -216,26 +211,34 @@ int eeprom_program(uint32_t addr, const uint8_t *data, uint32_t len)
         return -1; /* EEPROM probe failed */
     }
 
-    ret = spi_write_enable();
-    if (ret != 0) {
-        return ret; /* Write enable failed */
-    }
 
     /* Populate command buffer */
     cmd_buf[0] = cfg.pp_cmd; /* Program command */
-    fill_addr(&cmd_buf[1], addr); /* Address in big-endian format */
 
-    buf[0].tx_buf = cmd_buf;
-    buf[0].rx_buf = NULL;
-    buf[0].len = 5; /* 1 byte command + 4 bytes address */
-    buf[1].tx_buf = data;
-    buf[1].rx_buf = NULL;
-    buf[1].len = len;
-    ret = spi_transfer(buf, 2);
-    if (ret != 0) {
-        return ret; /* SPI transfer failed */
+    for (uint32_t off = 0; off < len; off += 0x100) {
+        ret = spi_write_enable();
+        if (ret != 0) {
+            return ret; /* Write enable failed */
+        }
+
+        fill_addr(&cmd_buf[1], addr + off); /* Address in big-endian format */
+
+        buf[0].tx_buf = cmd_buf;
+        buf[0].rx_buf = NULL;
+        buf[0].len = 5; /* 1 byte command + 4 bytes address */
+        buf[1].tx_buf = &data[off];
+        buf[1].rx_buf = NULL;
+        buf[1].len = 0x100; /* Program 256 bytes */
+        ret = spi_transfer(buf, 2);
+        if (ret != 0) {
+            return ret; /* SPI transfer failed */
+        }
+        ret = wait_spi_ready(); /* Wait for the EEPROM to be ready */
+        if (ret != 0) {
+            return ret;
+        }
     }
-    return wait_spi_ready(); /* Wait for the EEPROM to be ready */
+    return 0;
 }
 
 int eeprom_read(uint32_t addr, uint8_t *data, uint32_t len)

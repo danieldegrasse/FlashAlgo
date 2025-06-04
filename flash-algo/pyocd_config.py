@@ -66,6 +66,7 @@ def will_connect():
                 start=spiflash_base,
                 length=spiflash_size,
                 blocksize=0x1000,
+                page_size=0x100,
                 flm=flash_algo,
                 )
 
