@@ -22,8 +22,8 @@ struct FlashDevice const FlashDevice = {
     FLASH_DRV_VERS,            // Driver Version, do not modify!
     DEVICE_NAME,               // Device Name (128 chars max)
     EXTSPI,                    // Device Type
-    0x80000000,                // Device Start Address
-    0x20000000,                // Device Size
+    0x00000000,                // Device Start Address
+    0x4000000,                 // Device Size
     0x00001000,                // Programming Page Size
     0x00000000,                // Reserved, must be 0
     0xFF,                      // Initial Content of Erased Memory

@@ -240,8 +240,8 @@ int stm32_spi_transfer(struct spi_buf *bufs, uint8_t cnt)
     /* Just use a polling transfer here */
     for (uint8_t buf_idx = 0; buf_idx < cnt; buf_idx++) {
         tx_off = 0, rx_off = 0;
-        while (tx_off < bufs[buf_idx].len) {
-            while (LL_SPI_IsActiveFlag_TXE(SPI1) && (tx_off < bufs[buf_idx].len)) {
+        while (tx_off < bufs[buf_idx].len || rx_off < bufs[buf_idx].len) {
+            if (LL_SPI_IsActiveFlag_TXE(SPI1) && tx_off < bufs[buf_idx].len) {
                 /* Write bytes to TX FIFO */
                 if (bufs[buf_idx].tx_buf) {
                     LL_SPI_TransmitData8(SPI1, bufs[buf_idx].tx_buf[tx_off]);
@@ -250,7 +250,7 @@ int stm32_spi_transfer(struct spi_buf *bufs, uint8_t cnt)
                 }
                 tx_off++;
             }
-            while (LL_SPI_IsActiveFlag_RXNE(SPI1) && (rx_off < bufs[buf_idx].len)) {
+            if (LL_SPI_IsActiveFlag_RXNE(SPI1) && rx_off < bufs[buf_idx].len) {
                 /* Read bytes from RX FIFO */
                 if (bufs[buf_idx].rx_buf) {
                     bufs[buf_idx].rx_buf[rx_off] = LL_SPI_ReceiveData8(SPI1);
@@ -260,20 +260,8 @@ int stm32_spi_transfer(struct spi_buf *bufs, uint8_t cnt)
                 rx_off++;
             }
         }
-        /* Read any data left in RX FIFO */
-        while (rx_off < bufs[buf_idx].len) {
-            /* Wait for data in RX FIFO */
-            while (!LL_SPI_IsActiveFlag_RXNE(SPI1)) {
-                /* Wait for data */
-            }
-            if (bufs[buf_idx].rx_buf) {
-                bufs[buf_idx].rx_buf[rx_off] = LL_SPI_ReceiveData8(SPI1);
-            } else {
-                LL_SPI_ReceiveData8(SPI1); /* If no RX buffer, discard data */
-            }
-            rx_off++;
-        }
     }
+
     while (LL_SPI_IsActiveFlag_BSY(SPI1)) {
         /* Wait for BSY flag to clear, indicating transfer is done. */
     }

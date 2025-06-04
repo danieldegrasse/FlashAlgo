@@ -90,9 +90,10 @@ static int wait_spi_ready(void)
     uint8_t status = SPI_NOR_WIP_BIT;
     buf[0].tx_buf = &status_cmd;
     buf[0].rx_buf = NULL;
+    buf[0].len = 1; /* 1 byte command */
     buf[1].tx_buf = NULL;
     buf[1].rx_buf = &status;
-    buf[0].len = sizeof(status);
+    buf[1].len = sizeof(status);
     /* PYOCD will simply timeout if the spi flash never clears the WIP bit */
     while (status & SPI_NOR_WIP_BIT) {
         ret = spi_transfer(buf, 2);
@@ -103,6 +104,16 @@ static int wait_spi_ready(void)
     return 0; /* SPI ready */
 }
 
+static int spi_write_enable(void)
+{
+    uint8_t cmd = 0x06; /* Write Enable command */
+    struct spi_buf buf;
+
+    buf.tx_buf = &cmd;
+    buf.rx_buf = NULL;
+    buf.len = 1; /* 1 byte command */
+    return spi_transfer(&buf, 1); /* Send write enable command */
+}
 
 int eeprom_init(void)
 {
@@ -131,6 +142,11 @@ int eeprom_erase_chip(void)
         return -1; /* EEPROM probe failed */
     }
 
+    ret = spi_write_enable();
+    if (ret != 0) {
+        return ret; /* Write enable failed */
+    }
+
     /* Populate command buffer */
     buf.tx_buf = &cfg.ce_cmd; /* Chip erase command */
     buf.rx_buf = NULL;
@@ -149,18 +165,18 @@ int eeprom_erase_sector(uint32_t sector)
     uint8_t cmd_buf[5];
     int ret;
 
-    volatile int i = 0;
-    while (i == 0) {
-        /* Wait for debugger */
-    }
-
     if (eeprom_probe(&cfg) != 0) {
         return -1; /* EEPROM probe failed */
     }
 
+    ret = spi_write_enable();
+    if (ret != 0) {
+        return ret; /* Write enable failed */
+    }
+
     /* Populate command buffer */
     cmd_buf[0] = cfg.se_cmd; /* Erase command */
-    fill_addr(&cmd_buf[1], sector * 0x1000); /* Address in big-endian format */
+    fill_addr(&cmd_buf[1], sector); /* Address in big-endian format */
 
     buf.tx_buf = cmd_buf;
     buf.rx_buf = NULL;
@@ -192,12 +208,17 @@ int eeprom_program(uint32_t addr, const uint8_t *data, uint32_t len)
         return -1; /* Address and length must be aligned to 4KB */
     }
 
+    if (data == NULL || len == 0) {
+        return -1; /* Invalid parameters */
+    }
+
     if (eeprom_probe(&cfg) != 0) {
         return -1; /* EEPROM probe failed */
     }
 
-    if (data == NULL || len == 0) {
-        return -1; /* Invalid parameters */
+    ret = spi_write_enable();
+    if (ret != 0) {
+        return ret; /* Write enable failed */
     }
 
     /* Populate command buffer */
@@ -222,11 +243,6 @@ int eeprom_read(uint32_t addr, uint8_t *data, uint32_t len)
     struct spi_nor_config cfg;
     struct spi_buf buf[2];
     uint8_t cmd_buf[5];
-
-    volatile int i = 0;
-    while (i == 0) {
-        /* Wait for debugger */
-    }
 
     if (eeprom_probe(&cfg) != 0) {
         return -1; /* EEPROM probe failed */

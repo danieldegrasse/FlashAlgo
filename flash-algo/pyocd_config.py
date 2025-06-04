@@ -1,6 +1,9 @@
 from pathlib import Path
 from pyocd.target.pack.flash_algo import PackFlashAlgo
 
+spiflash_base = 0x0
+spiflash_size = 0x4000000  # 64 MB
+
 def read_flash_memory(address, size) -> Sequence[int]:
     """
     Read a block of memory from the flash region.
@@ -9,7 +12,7 @@ def read_flash_memory(address, size) -> Sequence[int]:
     :param size: The number of bytes to read.
     :return: A bytearray containing the read data.
     """
-    if address < 0x80000000 or address + size > 0x80000000 + 0x4000000:
+    if address < spiflash_base or address + size > spiflash_base + spiflash_size:
        # Use the target's memory read function
        return target.read_memory_original(address, size)
     # Call the custom read function within the FLM
@@ -18,12 +21,12 @@ def read_flash_memory(address, size) -> Sequence[int]:
         raise RuntimeError(f"Flash read function not available for region at address {address:#x} with size {size:#x}.")
     pc_read = region.flash.flash_algo["pc_read"]
     # Read into device size ram buffer
-    result = region.flash._call_function_and_wait(pc_read, size, region.flash.begin_data, timeout=5.0)
+    result = region.flash._call_function_and_wait(pc_read, r0=address,
+            r1=size, r2=region.flash.begin_data, timeout=5.0)
     if result != 0:
         raise RuntimeError(f"Failed to read flash memory at address {address:#x} with size {size:#x}. Error code: {result}")
     # Copy from device RAM to sequence
-    data = target.read_memory_block8(self.begin_data, size)
-    breakpoint()
+    data = target.read_memory_block8(region.flash.begin_data, size)
     return data
 
 class SPIPackFlashAlgo(PackFlashAlgo):
@@ -60,8 +63,8 @@ def will_connect():
     # Define a fake flash region for the SPI NOR flash.
     spiflash = FlashRegion(
                 name="External SPI EEPROM",
-                start=0x80000000,
-                length=0x4000000,
+                start=spiflash_base,
+                length=spiflash_size,
                 blocksize=0x1000,
                 flm=flash_algo,
                 )

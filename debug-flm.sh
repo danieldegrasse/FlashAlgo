@@ -13,7 +13,7 @@
 # you can then use a command like `set i = 1` to break out of the loop
 # Usage: ./debug-flm.sh <unique_id_of_stlink>
 
-if [ $# -ne 1 ]; then
+if [ $# -lt 1 ]; then
 	echo "Error, provide the unique ID of the ST-link debugger to run this script"
 	exit 1
 fi
@@ -25,11 +25,17 @@ echo "timeout will take a while..."
 # Load the flash algorithm and attempt to program flash
 pyocd commander -vvv -u $1 --target STM32G0B1CEUx --script flash-algo/pyocd_config.py \
     --pack flash-algo/Keil.STM32G0xx_DFP.2.0.0.pack \
-    -c load projectfiles/make_gcc_arm/stm32g0xx_spi/build/stm32g0xx_spi.bin  0x80000000 > $file 2>&1
+    -c load projectfiles/make_gcc_arm/stm32g0xx_spi/build/stm32g0xx_spi.bin 0x0 > $file 2>&1
+if [ $? -eq 0 ]; then
+    echo "Flash algorithm loaded successfully, but no loop was found."
+    rm $file
+    exit 0
+fi
+cat $file
 addr=$(awk '{
     while (match($0, /code=0x[0-9a-f]*/)) {
         n++;
-        if (n==2) {
+        if (n==1) {
             hex = substr($0, RSTART + 5, RLENGTH - 5);  # extract just the "0xNNN" part
             print hex;
             exit
