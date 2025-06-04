@@ -15,14 +15,16 @@
 struct spi_nor_config {
     uint8_t read_cmd; /* Read command */
     uint8_t pp_cmd; /* Page program command */
-    uint8_t sector_erase_cmd; /* Sector erase command */
-    uint8_t chip_erase_cmd; /* Chip erase command */
+    uint8_t se_cmd; /* Sector erase command */
+    uint8_t ce_cmd; /* Chip erase command */
 };
 
 struct spi_nor_chip {
     uint32_t jedec_id; /* JEDEC ID of the chip */
     const struct spi_nor_config config;
 };
+
+#define SPI_NOR_WIP_BIT 0x01 /* Write In Progress bit in status register */
 
 /*
  * The data section doesn't work with PIC code for Cortex-M0+,
@@ -47,8 +49,8 @@ static int eeprom_probe(struct spi_nor_config *cfg)
             .config = {
                 .read_cmd = 0x13,
                 .pp_cmd = 0x12,
-                .sector_erase_cmd = 0x21,
-                .chip_erase_cmd = 0xC7,
+                .se_cmd = 0x21,
+                .ce_cmd = 0xC7,
             },
         },
         { .jedec_id = 0, .config = {0} } /* Terminator */
@@ -78,6 +80,30 @@ static void fill_addr(uint8_t *addr_buf, uint32_t addr)
     addr_buf[3] = addr & 0xFF; /* LSB */
 }
 
+static int wait_spi_ready(void)
+{
+    int ret;
+
+    /* Waits for the SPI to clear the WIP bit (bit 0 of status register 0) */
+    struct spi_buf buf[2];
+    uint8_t status_cmd = 0x05; /* Read status register command */
+    uint8_t status = SPI_NOR_WIP_BIT;
+    buf[0].tx_buf = &status_cmd;
+    buf[0].rx_buf = NULL;
+    buf[1].tx_buf = NULL;
+    buf[1].rx_buf = &status;
+    buf[0].len = sizeof(status);
+    /* PYOCD will simply timeout if the spi flash never clears the WIP bit */
+    while (status & SPI_NOR_WIP_BIT) {
+        ret = spi_transfer(buf, 2);
+        if (ret != 0) {
+            return ret; /* SPI transfer failed */
+        }
+    }
+    return 0; /* SPI ready */
+}
+
+
 int eeprom_init(void)
 {
     struct spi_nor_config cfg;
@@ -92,17 +118,103 @@ int eeprom_deinit(void)
 
 int eeprom_erase_chip(void)
 {
-    return -1; /* Chip erase not implemented */
+    struct spi_nor_config cfg;
+    struct spi_buf buf;
+    int ret;
+
+    volatile int i = 0;
+    while (i == 0) {
+        /* Wait for debugger */
+    }
+
+    if (eeprom_probe(&cfg) != 0) {
+        return -1; /* EEPROM probe failed */
+    }
+
+    /* Populate command buffer */
+    buf.tx_buf = &cfg.ce_cmd; /* Chip erase command */
+    buf.rx_buf = NULL;
+    buf.len = 1; /* 1 byte command */
+    ret = spi_transfer(&buf, 1);
+    if (ret != 0) {
+        return ret; /* SPI transfer failed */
+    }
+    return wait_spi_ready(); /* Wait for the chip to be ready */
 }
 
 int eeprom_erase_sector(uint32_t sector)
 {
-    return -1; /* Sector erase not implemented */
+    struct spi_nor_config cfg;
+    struct spi_buf buf;
+    uint8_t cmd_buf[5];
+    int ret;
+
+    volatile int i = 0;
+    while (i == 0) {
+        /* Wait for debugger */
+    }
+
+    if (eeprom_probe(&cfg) != 0) {
+        return -1; /* EEPROM probe failed */
+    }
+
+    /* Populate command buffer */
+    cmd_buf[0] = cfg.se_cmd; /* Erase command */
+    fill_addr(&cmd_buf[1], sector * 0x1000); /* Address in big-endian format */
+
+    buf.tx_buf = cmd_buf;
+    buf.rx_buf = NULL;
+    buf.len = 5; /* 1 byte command + 4 bytes address */
+    ret = spi_transfer(&buf, 1);
+    if (ret != 0) {
+        return ret; /* SPI transfer failed */
+    }
+    return wait_spi_ready(); /* Wait for the sector to be ready */
 }
 
 int eeprom_program(uint32_t addr, const uint8_t *data, uint32_t len)
 {
-    return -1; /* Programming not implemented */
+    struct spi_nor_config cfg;
+    struct spi_buf buf[2];
+    uint8_t cmd_buf[5];
+    int ret;
+
+    volatile int i = 0;
+    while (i == 0) {
+        /* Wait for debugger */
+    }
+
+    if (len == 0 || data == NULL) {
+        return -1; /* Invalid parameters */
+    }
+
+    if (len % 0x1000 != 0 || addr % 0x1000 != 0) {
+        return -1; /* Address and length must be aligned to 4KB */
+    }
+
+    if (eeprom_probe(&cfg) != 0) {
+        return -1; /* EEPROM probe failed */
+    }
+
+    if (data == NULL || len == 0) {
+        return -1; /* Invalid parameters */
+    }
+
+    /* Populate command buffer */
+    cmd_buf[0] = cfg.pp_cmd; /* Program command */
+    fill_addr(&cmd_buf[1], addr); /* Address in big-endian format */
+
+    buf[0].tx_buf = cmd_buf;
+    buf[0].rx_buf = NULL;
+    buf[0].len = 5; /* 1 byte command + 4 bytes address */
+    buf[1].tx_buf = data;
+    buf[1].rx_buf = NULL;
+    buf[1].len = len;
+    ret = spi_transfer(buf, 2);
+    if (ret != 0) {
+        return ret; /* SPI transfer failed */
+    }
+    return wait_spi_ready(); /* Wait for the EEPROM to be ready */
 }
 
 int eeprom_read(uint32_t addr, uint8_t *data, uint32_t len)

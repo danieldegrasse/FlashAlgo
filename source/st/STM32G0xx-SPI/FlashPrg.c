@@ -52,7 +52,7 @@ uint32_t Init(uint32_t adr, uint32_t clk, uint32_t fnc)
  */
 uint32_t UnInit(uint32_t fnc)
 {
-    return 1;
+    return eeprom_deinit() == 0 ? 0 : 1;
 }
 
 /*
@@ -73,7 +73,7 @@ uint32_t BlankCheck(uint32_t adr, uint32_t sz, uint8_t pat)
  */
 uint32_t EraseChip(void)
 {
-    return 1;
+    return eeprom_erase_chip() == 0 ? 0 : 1;
 }
 
 /*
@@ -83,7 +83,7 @@ uint32_t EraseChip(void)
  */
 uint32_t EraseSector(uint32_t adr)
 {
-    return 1;
+    return eeprom_erase_sector(adr) == 0 ? 0 : 1;
 }
 
 /*
@@ -95,7 +95,7 @@ uint32_t EraseSector(uint32_t adr)
  */
 uint32_t ProgramPage(uint32_t adr, uint32_t sz, uint32_t *buf)
 {
-    return 1;
+    return eeprom_program(adr, (const uint8_t *)buf, sz) == 0 ? 0 : 1;
 }
 
 /*
@@ -108,4 +108,17 @@ uint32_t ProgramPage(uint32_t adr, uint32_t sz, uint32_t *buf)
 uint32_t Verify(uint32_t adr, uint32_t sz, uint32_t *buf)
 {
     return 1;
+}
+
+/*
+ * Custom API- not part of FLM spec!
+ * Read data from EEPROM
+ *   Parameter:      adr:  Start Address
+ *                   sz:   Size of data to read
+ *                   buf:  Buffer to store read data
+ *   Return Value:   0 - OK,  1 - Failed
+ */
+uint32_t Read(uint32_t adr, uint32_t sz, uint32_t *buf)
+{
+    return eeprom_read(adr, (uint8_t *)buf, sz) == 0 ? 0 : 1;
 }

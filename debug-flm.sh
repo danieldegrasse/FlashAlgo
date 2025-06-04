@@ -23,9 +23,9 @@ file=$(mktemp)
 echo "Running pyocd and attempting to flash a file- you should have a loop somewhere in your code to halt on"
 echo "timeout will take a while..."
 # Load the flash algorithm and attempt to program flash
-pyocd commander -vvv -u $1 --pack projectfiles/stm32_dfp_patched.pack \
-	--target STM32G0B1CEUx -c load \
-	projectfiles/make_gcc_arm/stm32g0xx_spi/build/stm32g0xx_spi.bin  0x80000000 > $file 2>&1
+pyocd commander -vvv -u $1 --target STM32G0B1CEUx --script flash-algo/pyocd_config.py \
+    --pack flash-algo/Keil.STM32G0xx_DFP.2.0.0.pack \
+    -c load projectfiles/make_gcc_arm/stm32g0xx_spi/build/stm32g0xx_spi.bin  0x80000000 > $file 2>&1
 addr=$(awk '{
     while (match($0, /code=0x[0-9a-f]*/)) {
         n++;
@@ -47,5 +47,5 @@ echo "target remote localhost:3333" >> $gdbinit
 echo "sourcing $gdbinit, starting gdb"
 
 # Start another pyocd server, for debugging
-pyocd gdbserver --target STM32G0B1CEUx -u $1 --pack projectfiles/stm32_dfp_patched.pack &
+pyocd gdbserver --target STM32G0B1CEUx -u $1 --pack flash-algo/Keil.STM32G0xx_DFP.2.0.0.pack &
 gdb-multiarch $elf -ex "source $gdbinit"
