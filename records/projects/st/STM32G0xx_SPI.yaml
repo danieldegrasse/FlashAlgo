@@ -1,0 +1,13 @@
+common:
+    target:
+        - cortex-m0
+    macros:
+        - STM32G0xx
+        - STM32G0B1xx
+        - FLASH_DRV_VERS=0
+        - USE_FULL_LL_DRIVER
+    includes:
+        - source/FlashOS.h
+    sources:
+        - source/st/STM32G0xx-SPI
+        - source/st/STM32G0xx-SPI/hal
