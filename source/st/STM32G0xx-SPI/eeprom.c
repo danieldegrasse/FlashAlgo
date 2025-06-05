@@ -53,6 +53,19 @@ static int eeprom_probe(struct spi_nor_config *cfg)
                 .ce_cmd = 0xC7,
             },
         },
+        {
+            .jedec_id = 0x1A5B2C, /* JEDEC ID for MT35XU02GCBA */
+            .config = {
+                .read_cmd = 0x13,
+                .pp_cmd = 0x12,
+                .se_cmd = 0x21,
+		/* 0x60 is a common SPI NOR chip erase command.
+		 * 0xC4 given in datasheet doesn't work, so use this.
+		 * This is undocumented behavior!
+		 */
+                .ce_cmd = 0x60,
+            },
+        },
         { .jedec_id = 0, .config = {0} } /* Terminator */
     };
     struct spi_nor_chip *chip;
@@ -142,10 +155,9 @@ int eeprom_erase_chip(void)
         return ret; /* Write enable failed */
     }
 
-    /* Populate command buffer */
     buf.tx_buf = &cfg.ce_cmd; /* Chip erase command */
     buf.rx_buf = NULL;
-    buf.len = 1; /* 1 byte command */
+    buf.len = 1;
     ret = spi_transfer(&buf, 1);
     if (ret != 0) {
         return ret; /* SPI transfer failed */
