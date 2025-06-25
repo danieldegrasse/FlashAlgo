@@ -12,21 +12,24 @@ def read_flash_memory(address, size) -> Sequence[int]:
     :param size: The number of bytes to read.
     :return: A bytearray containing the read data.
     """
+    ap = next(iter(target.aps.values()))
     if address < spiflash_base or address + size > spiflash_base + spiflash_size:
        # Use the target's memory read function
-       return target.read_memory_original(address, size)
+       return ap.read_memory_original(address, size)
     # Call the custom read function within the FLM
     region = target.memory_map.get_region_for_address(address)
     if not region.flash._is_api_valid("pc_read"):
         raise RuntimeError(f"Flash read function not available for region at address {address:#x} with size {size:#x}.")
     pc_read = region.flash.flash_algo["pc_read"]
-    # Read into device size ram buffer
+    region.flash.init(region.flash.Operation.VERIFY)
+    # Read into device side ram buffer
     result = region.flash._call_function_and_wait(pc_read, r0=address,
             r1=size, r2=region.flash.begin_data, timeout=5.0)
     if result != 0:
         raise RuntimeError(f"Failed to read flash memory at address {address:#x} with size {size:#x}. Error code: {result}")
     # Copy from device RAM to sequence
-    data = target.read_memory_block8(region.flash.begin_data, size)
+    data = ap.read_memory_original(region.flash.begin_data, size)
+    region.flash.cleanup()
     return data
 
 class SPIPackFlashAlgo(PackFlashAlgo):
@@ -81,3 +84,10 @@ def will_connect():
     target.read_memory_original = target.read_memory_block8
     # Manually override the memory read function to read from the SPI NOR flash.
     target.read_memory_block8 = read_flash_memory
+
+def did_connect():
+    # Go ahead and replace the AP read function too- we need this one overridden
+    # as well, using the same hack as above
+    ap = next(iter(target.aps.values()))
+    ap.read_memory_original = ap.read_memory_block8
+    ap.read_memory_block8 = read_flash_memory
