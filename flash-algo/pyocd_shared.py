@@ -1,10 +1,13 @@
 from pathlib import Path
+from typing import Sequence, Dict, Any
+import types
 from pyocd.target.pack.flash_algo import PackFlashAlgo
+from pyocd.core.memory_map import FlashRegion
 
 spiflash_base = 0x0
 spiflash_size = 0x4000000  # 64 MB
 
-def read_flash_memory(address, size) -> Sequence[int]:
+def read_flash_memory(target, address, size) -> Sequence[int]:
     """
     Read a block of memory from the flash region.
 
@@ -56,10 +59,10 @@ class SPIPackFlashAlgo(PackFlashAlgo):
 
 
 """
-Called by pyocd at target connection time
+Wrapper function for when pyocd connects to the target.
+Will add a new flash region with the FLM for the SPI NOR flash.
 """
-def will_connect():
-    flm = Path(__file__).parent / "STM32G0Bx_SPI_EEPROM.FLM"
+def will_connect(flm, target):
     with flm.open("rb") as f:
         flash_algo = SPIPackFlashAlgo(f)
 
@@ -76,18 +79,13 @@ def will_connect():
     # Add the spi flash region to the memory map.
     target.memory_map.add_region(spiflash)
 
+"""
+Wrapper function for after pyocd connects to the target.
+"""
+def did_connect(target):
     # This is a bit of a hack. PYOCD assumes that all programmable flash is
     # memory mapped, so we need to override the memory read function to
     # read from the SPI NOR flash instead of the default memory read function.
-
-    # Save the original memory read function so we can call it later.
-    target.read_memory_original = target.read_memory_block8
-    # Manually override the memory read function to read from the SPI NOR flash.
-    target.read_memory_block8 = read_flash_memory
-
-def did_connect():
-    # Go ahead and replace the AP read function too- we need this one overridden
-    # as well, using the same hack as above
     ap = next(iter(target.aps.values()))
     ap.read_memory_original = ap.read_memory_block8
-    ap.read_memory_block8 = read_flash_memory
+    ap.read_memory_block8 = types.MethodType(read_flash_memory, target)

@@ -15,7 +15,7 @@ tool_specific:
                 - c
                 - nosys
             common_flags:
-                - -Os
+                - -g
                 - -Wall
                 - -ffunction-sections
                 - -fdata-sections
@@ -27,5 +27,3 @@ tool_specific:
             ld_flags:
                 - -nostartfiles
                 - -Wl,--print-memory-usage
-
-

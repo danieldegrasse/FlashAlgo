@@ -6,6 +6,7 @@ common:
         - STM32G0B1xx
         - FLASH_DRV_VERS=0
         - USE_FULL_LL_DRIVER
+        - USE_SPI1
     includes:
         - source/FlashOS.h
     sources:
